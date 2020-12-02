@@ -1,6 +1,6 @@
 {
   "name": "@mywheels/viscousjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple templating language similar to Liquid",
   "keywords": [
     "templating",
@@ -9,7 +9,7 @@
   ],
   "author": "Kelley van Evert <kelley@mywheels.nl>",
   "license": "MIT",
-  "main": "./lib/main.js",
+  "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
