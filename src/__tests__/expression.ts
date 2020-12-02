@@ -73,6 +73,21 @@ test("arithmetic", () => {
     value: ["+", ["num", 2], ["num", 5]],
   });
 
+  expect(Expr.parse(`2 <= 5`)).toEqual({
+    status: true,
+    value: ["<=", ["num", 2], ["num", 5]],
+  });
+
+  expect(Expr.parse(`2 >= 5`)).toEqual({
+    status: true,
+    value: [">=", ["num", 2], ["num", 5]],
+  });
+
+  expect(Expr.parse(`2 === 5`)).toEqual({
+    status: true,
+    value: ["===", ["num", 2], ["num", 5]],
+  });
+
   expect(Expr.parse(`(2 + 5) ^ -15`)).toEqual({
     status: true,
     value: ["^", ["+", ["num", 2], ["num", 5]], ["-", ["num", 15]]],

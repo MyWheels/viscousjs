@@ -7,7 +7,9 @@ export type Op =
   | "*"
   | "/"
   | "=="
+  | "==="
   | "!="
+  | "!=="
   | "<="
   | "<"
   | ">="
@@ -71,10 +73,7 @@ let _ = P.optWhitespace;
 //
 // Example: operators(["+", "-"])
 function operators(ops: string[]) {
-  const parsers = ops
-    .slice()
-    .sort()
-    .map((op) => P.string(op).trim(_));
+  const parsers = ops.map((op) => P.string(op).trim(_));
   return P.alt(...parsers) as P.Parser<Op>;
 }
 
@@ -226,7 +225,19 @@ const table = [
   { type: BINARY_LEFT, ops: operators(["*", "/"]) },
   {
     type: BINARY_LEFT,
-    ops: operators(["==", "!=", "<=", "<", ">=", ">", "contains", "+", "-"]),
+    ops: operators([
+      "===",
+      "==",
+      "!==",
+      "!=",
+      "<=",
+      "<",
+      ">=",
+      ">",
+      "contains",
+      "+",
+      "-",
+    ]),
   },
   {
     type: BINARY_LEFT,

@@ -55,11 +55,13 @@ export function evaluate(
           return;
         }
       }
-      case "==": {
+      case "==":
+      case "===": {
         // eslint-disable-next-line eqeqeq
         return evaluate(expr[1], env) == evaluate(expr[2], env);
       }
-      case "!=": {
+      case "!=":
+      case "!==": {
         // eslint-disable-next-line eqeqeq
         return evaluate(expr[1], env) != evaluate(expr[2], env);
       }
