@@ -1,6 +1,6 @@
 {
   "name": "@mywheels/viscousjs",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple templating language similar to Liquid",
   "keywords": [
     "templating",
@@ -22,7 +22,7 @@
     "lib/**/*"
   ],
   "scripts": {
-    "build": "microbundle",
+    "build": "microbundle --external none",
     "test": "jest --config jestconfig.json",
     "prepublish": "yarn test",
     "prepare": "yarn build"
