@@ -1,4 +1,6 @@
-![](./viscousjs.png)
+<div align="center">
+  <img alt="Viscous.js" width="500" src="./viscousjs.svg" />
+</div>
 
 _⚠️ work in progress ⚠️_
 
