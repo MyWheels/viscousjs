@@ -1,6 +1,7 @@
 import P from "parsimmon";
 
 import { ExprNode, Expr } from "./expression";
+import { Id } from "./shared";
 
 type Meta = {
   stripLeft: boolean;
@@ -11,6 +12,10 @@ export type IfTmplNode = P.Node<"if", Meta & { content: ExprNode }>;
 export type UnlessTmplNode = P.Node<"unless", Meta & { content: ExprNode }>;
 export type ElseIfTmplNode = P.Node<"elseif", Meta & { content: ExprNode }>;
 export type ElseTmplNode = P.Node<"else", Meta>;
+export type ForTmplNode = P.Node<
+  "for",
+  Meta & { content: { id: string; collection: ExprNode } }
+>;
 export type EndTmplNode = P.Node<"end", Meta>;
 export type InterpolationTmplNode = P.Node<
   "interpolation",
@@ -23,6 +28,7 @@ export type TmplNode =
   | UnlessTmplNode
   | ElseIfTmplNode
   | ElseTmplNode
+  | ForTmplNode
   | EndTmplNode
   | InterpolationTmplNode
   | RawTmplNode;
@@ -121,6 +127,21 @@ const ElseIf: P.Parser<ElseIfTmplNode> = makeBlock(
     .then(__)
     .then(UnaryBlockExpr)
 );
+const For: P.Parser<ForTmplNode> = makeBlock(
+  "for",
+  P.seqObj<{
+    id: string;
+    collection: ExprNode;
+  }>(
+    P.string("for"),
+    __,
+    ["id", Id],
+    __,
+    P.alt(P.string("in"), P.string("of")),
+    __,
+    ["collection", UnaryBlockExpr]
+  )
+);
 const End: P.Parser<EndTmplNode> = makeBlock(
   "end",
   P.alt(P.regex(/end(if|unless)?/)).result(null)
@@ -149,6 +170,7 @@ export const Tmpl = P.alt<TmplNode>(
   Else,
   ElseIf,
   End,
+  For,
   Interpolation,
   Raw
 ).many();

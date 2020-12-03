@@ -117,3 +117,17 @@ test("atoms", () => {
     },
   ]);
 });
+
+test("for loops", () => {
+  expect(Tmpl.tryParse(`{% for item in certain.items %}`)).toMatchObject([
+    {
+      name: "for",
+      value: {
+        content: {
+          id: "item",
+          collection: ["member", ["id", "certain"], "items"],
+        },
+      },
+    },
+  ]);
+});

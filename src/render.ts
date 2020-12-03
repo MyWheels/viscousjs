@@ -24,7 +24,7 @@ export function render(
 
   let stack: Array<
     [
-      "root" | "if" | "unless" | "else" | "elseif",
+      "root" | "if" | "unless" | "else" | "elseif" | "for",
       boolean[] // reverse
     ]
   > = [["root", []]]; // reverse
@@ -107,7 +107,10 @@ export function render(
         throw new Error("misplaced {% elseif %} block");
       }
     } else if (node.name === "end") {
-      if (["unless", "if", "elseif", "else"].indexOf(curr()) >= 0) {
+      if (curr() === "for") {
+        stack.shift();
+        // and now loop!
+      } else if (["unless", "if", "elseif", "else"].indexOf(curr()) >= 0) {
         while (["elseif", "else"].indexOf(curr()) >= 0) {
           stack.shift();
         }

@@ -1,5 +1,7 @@
 import P from "parsimmon";
 
+import { Id } from "./shared";
+
 export type Op =
   | "-"
   | "not"
@@ -182,7 +184,6 @@ const Str = P.regexp(/"((?:\\.|.)*?)"/, 1)
   .map((str): ExprNode => ["str", str])
   .desc("str");
 
-const Id = P.regexp(/[_a-zA-Z]+/);
 const Identifier = Id.map((str): ExprNode => ["id", str]).desc("id");
 
 const Member = P.seqMap(
