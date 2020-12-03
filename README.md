@@ -1,4 +1,4 @@
-# Viscous.js
+![](./viscousjs.png)
 
 _⚠️ work in progress ⚠️_
 
