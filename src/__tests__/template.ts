@@ -1,5 +1,61 @@
 import { Tmpl } from "../template";
 
+test("nested conditional blocks", () => {
+  expect(
+    Tmpl.tryParse(`
+      {%- if true -%}
+        {%- if false -%}
+          A
+        {%- else -%}
+          B
+        {%- endif -%}
+      {%- else -%}
+        C
+      {%- endif -%}
+    `)
+  ).toMatchObject([
+    {
+      name: "raw", // opening
+    },
+    {
+      name: "if", // if true
+    },
+    {
+      name: "raw",
+    },
+    {
+      name: "if", // if false
+    },
+    {
+      name: "raw", // A
+    },
+    {
+      name: "else", // else
+    },
+    {
+      name: "raw", // B
+    },
+    {
+      name: "end", // endif
+    },
+    {
+      name: "raw",
+    },
+    {
+      name: "else", // else
+    },
+    {
+      name: "raw", // C
+    },
+    {
+      name: "end",
+    },
+    {
+      name: "raw",
+    },
+  ]);
+});
+
 test("atoms", () => {
   expect(Tmpl.tryParse(`hello`)).toMatchObject([
     {

@@ -6,6 +6,7 @@ export type RenderConfig = {
   helpers?: Record<string, Function>;
   isTruthy?: (data: any) => boolean;
   throwOnError?: boolean;
+  verbose?: boolean;
   evaluate?: (expr: ExprNode, env?: any, config?: EvalConfig) => any;
 };
 
@@ -21,7 +22,16 @@ export function render(
     return (config.isTruthy || builtinTruthy)(expr);
   }
 
-  let stack: Array<["if" | "unless" | "else" | "elseif", boolean]> = []; // reverse
+  let stack: Array<
+    [
+      "root" | "if" | "unless" | "else" | "elseif",
+      boolean[] // reverse
+    ]
+  > = [["root", []]]; // reverse
+
+  const curr = () => stack[0][0];
+  const conditions = () => stack[0][1];
+  const shouldOutput = () => conditions().every(Boolean);
 
   let output: Array<{
     type: "raw" | "evaluated";
@@ -32,8 +42,11 @@ export function render(
   let stripNext = false;
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
+
+    config?.verbose && console.log("encounter node", shouldOutput(), node);
+
     if (node.name === "raw") {
-      if (!stack[0] || stack[0][1]) {
+      if (shouldOutput()) {
         output.push({
           type: "raw",
           i,
@@ -63,7 +76,7 @@ export function render(
     }
 
     if (node.name === "interpolation") {
-      if (!stack[0] || stack[0][1]) {
+      if (shouldOutput()) {
         output.push({
           type: "evaluated",
           i: NaN,
@@ -75,41 +88,43 @@ export function render(
 
     if (node.name === "if") {
       const val = ev(node.value.content);
-      stack.unshift(["if", tru(val)]);
+      stack.unshift(["if", [tru(val), ...conditions()]]);
     } else if (node.name === "unless") {
       const val = ev(node.value.content);
-      stack.unshift(["unless", !tru(val)]);
+      stack.unshift(["unless", [!tru(val), ...conditions()]]);
     } else if (node.name === "else") {
-      if (stack[0] && ["if", "elseif", "unless"].indexOf(stack[0][0]) >= 0) {
-        stack.unshift(["else", !stack[0][1]]);
+      if (["if", "elseif", "unless"].indexOf(curr()) >= 0) {
+        const [last, ...previous] = conditions();
+        stack.unshift(["else", [!last, ...previous]]);
       } else {
         throw new Error("misplaced {% else %} block");
       }
     } else if (node.name === "elseif") {
-      if (stack[0] && ["if", "elseif"].indexOf(stack[0][0]) >= 0) {
+      if (["if", "elseif"].indexOf(curr()) >= 0) {
         const val = ev(node.value.content);
-        stack.unshift(["elseif", val]);
+        stack.unshift(["elseif", [tru(val), ...conditions().slice(1)]]);
       } else {
         throw new Error("misplaced {% elseif %} block");
       }
     } else if (node.name === "end") {
-      if (
-        stack[0] &&
-        ["unless", "if", "elseif", "else"].indexOf(stack[0][0]) >= 0
-      ) {
-        while (
-          stack[0] &&
-          ["unless", "if", "elseif", "else"].indexOf(stack[0][0]) >= 0
-        ) {
+      if (["unless", "if", "elseif", "else"].indexOf(curr()) >= 0) {
+        while (["elseif", "else"].indexOf(curr()) >= 0) {
           stack.shift();
+        }
+        if (["unless", "if"].indexOf(curr()) >= 0) {
+          stack.shift();
+        } else {
+          throw new Error("misplaced {% end %} block");
         }
       } else {
         throw new Error("misplaced {% end %} block");
       }
     }
+
+    config?.verbose && console.log("stack is now", stack);
   }
 
-  if (stack.length > 0) {
+  if (stack.length !== 1) {
     throw new Error("block stack not empty at end");
   }
 

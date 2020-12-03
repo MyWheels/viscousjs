@@ -23,6 +23,7 @@ export type EvalConfig = {
   helpers?: Record<string, Function>;
   isTruthy?: (data: any) => boolean;
   throwOnError?: boolean;
+  verbose?: boolean;
 };
 
 export function evaluate(
@@ -51,7 +52,11 @@ export function evaluate(
           const key = expr[2];
           return obj[key];
         } else {
-          if (throwOnError) throw new Error("member expression invalid");
+          if (throwOnError) {
+            throw new Error(
+              `member expression invalid in ${JSON.stringify(expr)}`
+            );
+          }
           return;
         }
       }
