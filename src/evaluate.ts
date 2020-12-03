@@ -55,27 +55,59 @@ export function evaluate(
           return;
         }
       }
-      case "==":
       case "===": {
-        // eslint-disable-next-line eqeqeq
-        return evaluate(expr[1], env) == evaluate(expr[2], env);
+        const le = evaluate(expr[1], env);
+        const ri = evaluate(expr[2], env);
+        return le === ri;
       }
-      case "!=":
-      case "!==": {
+      case "==": {
+        const le = evaluate(expr[1], env);
+        const ri = evaluate(expr[2], env);
         // eslint-disable-next-line eqeqeq
-        return evaluate(expr[1], env) != evaluate(expr[2], env);
+        return le == ri;
+      }
+      case "!==": {
+        const le = evaluate(expr[1], env);
+        const ri = evaluate(expr[2], env);
+        return le !== ri;
+      }
+      case "!=": {
+        const le = evaluate(expr[1], env);
+        const ri = evaluate(expr[2], env);
+        // eslint-disable-next-line eqeqeq
+        return le != ri;
       }
       case ">": {
-        return evaluate(expr[1], env) > evaluate(expr[2], env);
+        const le = evaluate(expr[1], env);
+        const ri = evaluate(expr[2], env);
+        if (!isTruthy(le) || !isTruthy(ri)) {
+          return null;
+        }
+        return le > ri;
       }
       case ">=": {
-        return evaluate(expr[1], env) >= evaluate(expr[2], env);
+        const le = evaluate(expr[1], env);
+        const ri = evaluate(expr[2], env);
+        if (!isTruthy(le) || !isTruthy(ri)) {
+          return null;
+        }
+        return le >= ri;
       }
       case "<": {
-        return evaluate(expr[1], env) < evaluate(expr[2], env);
+        const le = evaluate(expr[1], env);
+        const ri = evaluate(expr[2], env);
+        if (!isTruthy(le) || !isTruthy(ri)) {
+          return null;
+        }
+        return le < ri;
       }
       case "<=": {
-        return evaluate(expr[1], env) <= evaluate(expr[2], env);
+        const le = evaluate(expr[1], env);
+        const ri = evaluate(expr[2], env);
+        if (!isTruthy(le) || !isTruthy(ri)) {
+          return null;
+        }
+        return le <= ri;
       }
       case "or": {
         const le = evaluate(expr[1], env);

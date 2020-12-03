@@ -61,3 +61,84 @@ test("progress", () => {
 
   expect(parseAndEvaluate("75")).toEqual(75);
 });
+
+test("mywheels end trip check question conditions", () => {
+  const envA = {
+    resource: {
+      askDamage: true,
+      parkingType: "zone",
+      fuelType: "benzine",
+      fuelLevel: null,
+    },
+    decisions: {
+      parkedAtChargingStation: "yes",
+    },
+  };
+
+  expect(
+    parseAndEvaluate(
+      `resource.askDamage and resource.parkingType == 'zone'`,
+      envA
+    )
+  ).toEqual(true);
+
+  expect(
+    parseAndEvaluate(
+      `resource.askDamage and resource.parkingType == 'parking_spot'`,
+      envA
+    )
+  ).toEqual(false);
+
+  expect(
+    parseAndEvaluate(
+      `resource.fuelType == 'elektrisch' and resource.parkingType == 'zone' and resource.fuelLevel >= 75 and resource.fuelLevel <= 85`,
+      envA
+    )
+  ).toEqual(false);
+
+  expect(
+    parseAndEvaluate(
+      `resource.fuelType == 'elektrisch' and (decisions.parkedAtChargingStation == 'yes' or resource.fuelLevel < 75 or resource.parkingType == 'parking_spot')`,
+      envA
+    )
+  ).toEqual(false);
+
+  expect(
+    parseAndEvaluate(
+      `resource.fuelType == 'elektrisch' and resource.fuelLevel > 85 and resource.parkingType == 'zone'`,
+      envA
+    )
+  ).toEqual(false);
+
+  expect(parseAndEvaluate(`resource.fuelLevel > 85`, envA)).toEqual(null);
+
+  expect(parseAndEvaluate(`resource.fuelLevel < 85`, envA)).toEqual(null);
+
+  const envB = {
+    resource: {
+      askDamage: true,
+      parkingType: "zone",
+      fuelType: "elektrisch",
+      fuelLevel: null,
+    },
+    decisions: {
+      parkedAtChargingStation: "yes",
+    },
+  };
+
+  expect(
+    parseAndEvaluate(
+      `resource.fuelType == 'elektrisch' and (decisions.parkedAtChargingStation == 'yes' or resource.fuelLevel < 75 or resource.parkingType == 'parking_spot')`,
+      envB
+    )
+  ).toEqual(true);
+
+  // empty env
+
+  expect(
+    parseAndEvaluate(
+      `resource.fuelType == 'elektrisch' and (decisions.parkedAtChargingStation == 'yes' or resource.fuelLevel < 75 or resource.parkingType == 'parking_spot')`,
+      {}
+    )
+  ).toBeFalsy();
+});
