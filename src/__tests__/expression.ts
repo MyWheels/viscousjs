@@ -68,6 +68,41 @@ test("arithmetic", () => {
     value: ["-", ["num", 42]],
   });
 
+  expect(Expr.parse(`42.5`)).toEqual({
+    status: true,
+    value: ["num", 42.5],
+  });
+
+  expect(Expr.parse(`.5`)).toEqual({
+    status: true,
+    value: ["num", 0.5],
+  });
+
+  expect(Expr.parse(`0.5`)).toEqual({
+    status: true,
+    value: ["num", 0.5],
+  });
+
+  expect(Expr.parse(`-0.5`)).toEqual({
+    status: true,
+    value: ["-", ["num", 0.5]],
+  });
+
+  expect(Expr.parse(`-.5`)).toEqual({
+    status: true,
+    value: ["-", ["num", 0.5]],
+  });
+
+  expect(Expr.parse(`50_000_000`)).toEqual({
+    status: true,
+    value: ["num", 50000000],
+  });
+
+  expect(Expr.parse(`5_0__0000_00.`)).toEqual({
+    status: true,
+    value: ["num", 50000000],
+  });
+
   expect(Expr.parse(`2 + 5`)).toEqual({
     status: true,
     value: ["+", ["num", 2], ["num", 5]],

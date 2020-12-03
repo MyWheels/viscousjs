@@ -167,8 +167,8 @@ function BINARY_LEFT(
 // Just match simple integers and turn them into JavaScript numbers. Wraps it up
 // in an array with a string tag so that our data is easy to manipulate at the
 // end and we don't have to use `typeof` to check it.
-const Num = P.regexp(/[0-9]+/)
-  .map((str): ExprNode => ["num", +str])
+const Num = P.regexp(/[0-9\.][0-9\._]*/)
+  .map((str): ExprNode => ["num", +str.replace(/_/g, "")])
   .desc("num");
 
 const Bool = P.string("true")

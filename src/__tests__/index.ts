@@ -1,4 +1,4 @@
-import { parseAndRender } from "../index";
+import { parseAndRender, parseAndEvaluate } from "../index";
 
 test("evaluation", () => {
   expect(parseAndRender(`{{ 5 }}`)).toEqual("5");
@@ -26,4 +26,38 @@ test("evaluation", () => {
       }
     )
   ).toEqual("don't show question");
+});
+
+test("progress", () => {
+  expect(
+    parseAndEvaluate("if(resource.fuelType == 'elektrisch', 25, 50)", {
+      resource: {
+        fuelType: "elektrisch",
+      },
+    })
+  ).toEqual(25);
+
+  expect(
+    parseAndEvaluate("if(resource.fuelType == 'elektrisch', 25, 50)", {
+      resource: {
+        fuelType: "benzine",
+      },
+    })
+  ).toEqual(50);
+
+  expect(
+    parseAndEvaluate("if(resource.fuelType == 'elektrisch', 25, 50)", {
+      resource: 42,
+    })
+  ).toEqual(50);
+
+  expect(
+    parseAndEvaluate("if(resource.fuelType == 'elektrisch', 25, 50)")
+  ).toEqual(50);
+
+  expect(parseAndEvaluate("37.5")).toEqual(37.5);
+
+  expect(parseAndEvaluate("50")).toEqual(50);
+
+  expect(parseAndEvaluate("75")).toEqual(75);
 });
