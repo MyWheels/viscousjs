@@ -4,6 +4,7 @@ import { evaluate } from "./evaluate";
 import { render } from "./render";
 import { ViscousConfig } from "./shared";
 
+export * from "./shared";
 export * from "./expression";
 export * from "./template";
 export * from "./evaluate";
