@@ -1,5 +1,12 @@
 import { ExprNode } from "./expression";
-import { TmplNode } from "./template";
+import {
+  TmplPiece,
+  TmplNodeBase,
+  RawTmplPiece,
+  InterpolationTmplPiece,
+  IfTmplPiece,
+  ForTmplPiece,
+} from "./template";
 import { evaluate, builtinTruthy, EvalConfig } from "./evaluate";
 
 export type RenderConfig = {
@@ -10,8 +17,60 @@ export type RenderConfig = {
   evaluate?: (expr: ExprNode, env?: any, config?: EvalConfig) => any;
 };
 
+export function renderAst(
+  node: TmplNodeBase,
+  env: any = {},
+  config: RenderConfig = {}
+): string {
+  function ev(expr: ExprNode) {
+    return (config.evaluate || evaluate)(expr, env, config);
+  }
+  function tru(expr: ExprNode) {
+    return (config.isTruthy || builtinTruthy)(expr);
+  }
+
+  function r(child: TmplNodeBase): string {
+    return renderAst(child, env, config);
+  }
+
+  if (node.type === "root") {
+    return node.children.map(r).join("");
+  } else if (node.type === "raw") {
+    return (node.piece as RawTmplPiece).value.content;
+  } else if (node.type === "interpolation") {
+    return "" + ev((node.piece as InterpolationTmplPiece).value.content);
+  } else if (node.type === "if" || node.type === "elseif") {
+    const condition = ev((node.piece as IfTmplPiece).value.content);
+    return tru(condition) ? node.children.map(r).join("") : "";
+  } else if (node.type === "unless" || node.type === "else") {
+    const condition = ev((node.piece as IfTmplPiece).value.content);
+    return !tru(condition) ? node.children.map(r).join("") : "";
+  } else if (node.type === "for") {
+    const { id, collection } = (node.piece as ForTmplPiece).value.content;
+    const arr = ev(collection);
+    if (!Array.isArray(arr)) {
+      if (config?.throwOnError) {
+        throw new Error("render error: collection is not an array");
+      } else {
+        return "";
+      }
+    }
+    return arr
+      .map((item: any) => {
+        return node.children
+          .map((child) => {
+            return renderAst(child, { ...env, [id]: item }, config);
+          })
+          .join("");
+      })
+      .join("");
+  } else {
+    throw new Error("unknown ast type");
+  }
+}
+
 export function render(
-  nodes: TmplNode[],
+  nodes: TmplPiece[],
   env: any = {},
   config: RenderConfig = {}
 ) {

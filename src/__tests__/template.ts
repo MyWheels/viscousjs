@@ -1,4 +1,4 @@
-import { Tmpl } from "../template";
+import { Tmpl, intoAST } from "../template";
 
 test("nested conditional blocks", () => {
   expect(
@@ -130,4 +130,85 @@ test("for loops", () => {
       },
     },
   ]);
+});
+
+test("ast", () => {
+  function raw(content: string) {
+    return {
+      type: "raw",
+      piece: {
+        name: "raw",
+        value: { content },
+      },
+    };
+  }
+
+  function basicIfElse(ca: any, cb: any) {
+    return [
+      {
+        type: "if",
+        piece: {
+          name: "if",
+          value: { content: ["bool", true] },
+        },
+        children: ca,
+      },
+      {
+        type: "else",
+        piece: {
+          name: "if",
+          value: { content: ["bool", true] },
+        },
+        children: cb,
+      },
+    ];
+  }
+
+  expect(Tmpl.map(intoAST).tryParse("A")).toMatchObject({
+    type: "root",
+    children: [raw("A")],
+  });
+
+  expect(
+    Tmpl.map(intoAST).tryParse("{% if true %}A{% else %}B{% end %}")
+  ).toMatchObject({
+    type: "root",
+    children: [...basicIfElse([raw("A")], [raw("B")])],
+  });
+
+  expect(
+    Tmpl.map(intoAST).tryParse(
+      "{% if true %}{% if true %}A{% else %}B{% end %}{% else %}C{% end %}"
+    )
+  ).toMatchObject({
+    type: "root",
+    children: [
+      ...basicIfElse([...basicIfElse([raw("A")], [raw("B")])], [raw("C")]),
+    ],
+  });
+
+  expect(
+    Tmpl.map(intoAST).tryParse(
+      "{% for item in items %}{% if true %}{% if true %}A{% else %}B{% end %}{% else %}C{% end %}{% end %}"
+    )
+  ).toMatchObject({
+    type: "root",
+    children: [
+      {
+        type: "for",
+        piece: {
+          name: "for",
+          value: {
+            content: {
+              id: "item",
+              collection: ["id", "items"],
+            },
+          },
+        },
+        children: [
+          ...basicIfElse([...basicIfElse([raw("A")], [raw("B")])], [raw("C")]),
+        ],
+      },
+    ],
+  });
 });
