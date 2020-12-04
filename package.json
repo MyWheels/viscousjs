@@ -1,6 +1,6 @@
 {
   "name": "@mywheels/viscousjs",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A simple templating language similar to Liquid",
   "keywords": [
     "templating",
