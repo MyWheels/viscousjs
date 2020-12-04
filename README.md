@@ -2,6 +2,8 @@
   <img alt="Viscous.js" width="500" src="./viscousjs.svg" />
 </div>
 
+[![npm version](https://badgen.net/npm/v/@mywheels/viscousjs)](https://www.npmjs.com/package/@mywheels/viscousjs) [![types included](https://badgen.net/npm/types/@mywheels/viscousjs)](https://github.com/mywheels/viscousjs) [![minified size](https://badgen.net/bundlephobia/min/@mywheels/viscousjs)](https://bundlephobia.com/result?p=@mywheels/viscousjs)
+
 _⚠️ work in progress ⚠️_
 
 Viscous.js is a simple and straightforward templating engine, similar to Liquid(.js). It's different though, in that:
