@@ -15,7 +15,6 @@ It doesn't yet have feature parity, because these things (amongst others) are st
 
 - Helper loop variables like `forloop` and `index0` etc.
 - Other kinds of iteration
-- Filters
 - The comment, cycle, increment, decrement, raw, and capture tags
 
 And then there are certain features that I'm not planning to add (unless someone wishes to contribute):

@@ -17,6 +17,41 @@ export const builtinHelpers: Record<string, Function> = {
   cond(cond: any, a: any, b: any) {
     return builtinTruthy(cond) ? a : b;
   },
+  abs(num: any) {
+    return Math.abs(num);
+  },
+  append(a: any, b: any) {
+    return a + b;
+  },
+  at_least(num: any, min: any) {
+    return Math.max(num, min);
+  },
+  at_most(num: any, max: any) {
+    return Math.min(num, max);
+  },
+  capitalize(str: any) {
+    return (str + "").toLocaleUpperCase();
+  },
+  downcase(str: any) {
+    return (str + "").toLocaleLowerCase();
+  },
+  ceil(num: any) {
+    return Math.ceil(num);
+  },
+  floor(num: any) {
+    return Math.floor(num);
+  },
+  default(val: any, fallback: any) {
+    if (
+      !builtinTruthy(val) ||
+      val === "" ||
+      (Array.isArray(val) && val.length === 0)
+    ) {
+      return fallback;
+    } else {
+      return val;
+    }
+  },
 };
 
 export function evaluate(

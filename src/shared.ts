@@ -30,6 +30,11 @@ export type ExprNode =
   | ["helper", string, ExprNode[]]
   | [Op, ...ExprNode[]];
 
+export type Filter = {
+  filter: string;
+  args: ExprNode[];
+};
+
 export type ViscousConfig = {
   helpers?: Record<string, Function>;
   isTruthy?: (data: any) => boolean;
@@ -49,6 +54,7 @@ export type RootNode = TmplNodeBase & {
 export type InterpolationNode = TmplNodeBase & {
   type: "interpolation";
   expression: ExprNode;
+  filters: Filter[];
 };
 export type CondNode = TmplNodeBase & {
   type: "cond"; // used for `if`, `unless`, and `elseif`

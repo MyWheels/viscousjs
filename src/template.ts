@@ -1,7 +1,7 @@
 import P from "parsimmon";
 
 import { Expr } from "./expression";
-import { ExprNode, Id, TmplNode, RootNode } from "./shared";
+import { ExprNode, Id, TmplNode, RootNode, Filter } from "./shared";
 
 type Meta = {
   stripLeft: boolean;
@@ -14,29 +14,6 @@ const InterpOpen = P.regexp(/\{\{-?/).map((str) => str.length === 3);
 const InterpClose = P.regexp(/-?\}\}/).map((str) => str.length === 3);
 const BlockOpen = P.regexp(/\{%-?/).map((str) => str.length === 3);
 const BlockClose = P.regexp(/-?%\}/).map((str) => str.length === 3);
-
-function andThenParseAsExpression(str: string) {
-  return P((_input, i) => {
-    try {
-      const res = Expr.tryParse(str);
-      return P.makeSuccess(i, res);
-    } catch (error) {
-      return P.makeFailure(i, "failed parsing inner expression");
-    }
-  });
-}
-
-const ReadUntilEndOfBlock = P((input, i) => {
-  let j = i;
-  while (j < input.length && !input.slice(j).match(/^[ \n\t]*-?[%\}]\}/)) {
-    j++;
-  }
-  if (j >= input.length) {
-    return P.makeFailure(j, ["%}", "}}"]);
-  } else {
-    return P.makeSuccess(j, input.slice(i, j));
-  }
-});
 
 // Reads a block of the shape {%-? (content) -?%}
 function inControlBlock<T extends object>(
@@ -59,16 +36,36 @@ function inInterpolationBlock<T extends object>(
   );
 }
 
+const Pipe: P.Parser<Filter> = P.string("|")
+  .then(_)
+  .then(
+    P.alt<{
+      filter: string;
+      args: ExprNode[];
+    }>(
+      P.seq(Id, P.string(":"), _, Expr.sepBy1(P.regexp(/,\s*/))).map(
+        ([filter, , , args]) => {
+          return { filter, args };
+        }
+      ),
+      Id.map((filter) => {
+        return { filter, args: [] };
+      })
+    )
+  );
+
 type InterpolationBlock = Meta & {
   type: "interpolation";
   expression: ExprNode;
+  filters: Filter[];
 };
 
-const Interpolation: P.Parser<InterpolationBlock> = ReadUntilEndOfBlock.chain(
-  andThenParseAsExpression
+const Interpolation: P.Parser<InterpolationBlock> = P.seq(
+  Expr.skip(_),
+  Pipe.skip(_).many()
 )
-  .map((expression) => {
-    return { type: "interpolation" as "interpolation", expression };
+  .map(([expression, filters]) => {
+    return { type: "interpolation" as "interpolation", expression, filters };
   })
   .thru(inInterpolationBlock);
 
@@ -79,8 +76,7 @@ type IfBlock = Meta & {
 
 const If: P.Parser<IfBlock> = P.string("if")
   .then(__)
-  .then(ReadUntilEndOfBlock)
-  .chain(andThenParseAsExpression)
+  .then(Expr)
   .map((condition) => {
     return { type: "if" as "if", condition };
   })
@@ -93,8 +89,7 @@ type UnlessBlock = Meta & {
 
 const Unless: P.Parser<UnlessBlock> = P.string("unless")
   .then(__)
-  .then(ReadUntilEndOfBlock)
-  .chain(andThenParseAsExpression)
+  .then(Expr)
   .map((condition) => {
     return { type: "unless" as "unless", condition };
   })
@@ -117,8 +112,7 @@ type ElseIfBlock = Meta & {
 
 const ElseIf: P.Parser<ElseIfBlock> = P.regexp(/el(s(e ?)?)?if/)
   .then(__)
-  .then(ReadUntilEndOfBlock)
-  .chain(andThenParseAsExpression)
+  .then(Expr)
   .map((condition) => {
     return { type: "elseif" as "elseif", condition };
   })
@@ -140,7 +134,7 @@ const For: P.Parser<ForBlock> = P.seqObj<{
   __,
   P.alt(P.string("in"), P.string("of")),
   __,
-  ["collection", ReadUntilEndOfBlock.chain(andThenParseAsExpression)]
+  ["collection", Expr]
 )
   .map((info) => {
     return { type: "for" as "for", ...info };
@@ -265,6 +259,7 @@ export function intoAST(blocks: Block[]) {
         id: ++_uid,
         type: "interpolation",
         expression: block.expression,
+        filters: block.filters,
         children: [],
       });
     } else if (block.type === "for") {

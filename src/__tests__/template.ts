@@ -198,3 +198,65 @@ test("question", () => {
     ],
   });
 });
+
+test("filters", () => {
+  expect(Tmpl.tryParse(`{{ hello }}`)).toMatchObject({
+    type: "root",
+    children: [
+      { type: "interpolation", expression: ["id", "hello"], filters: [] },
+    ],
+  });
+
+  expect(Tmpl.tryParse(`{{ hello | round }}`)).toMatchObject({
+    type: "root",
+    children: [
+      {
+        type: "interpolation",
+        expression: ["id", "hello"],
+        filters: [{ filter: "round" }],
+      },
+    ],
+  });
+
+  expect(
+    Tmpl.tryParse(`{{ hello | round | concat: "something" }}`)
+  ).toMatchObject({
+    type: "root",
+    children: [
+      {
+        type: "interpolation",
+        expression: ["id", "hello"],
+        filters: [
+          { filter: "round" },
+          { filter: "concat", args: [["str", "something"]] },
+        ],
+      },
+    ],
+  });
+
+  expect(
+    Tmpl.tryParse(
+      `{{ hello | round | concat: "something" | where: 4, 5, 'and 6' }}`
+    )
+  ).toMatchObject({
+    type: "root",
+    children: [
+      {
+        type: "interpolation",
+        expression: ["id", "hello"],
+        filters: [
+          { filter: "round" },
+          { filter: "concat", args: [["str", "something"]] },
+          {
+            filter: "where",
+            args: [
+              ["num", 4],
+              ["num", 5],
+              ["str", "and 6"],
+            ],
+          },
+        ],
+      },
+    ],
+  });
+});

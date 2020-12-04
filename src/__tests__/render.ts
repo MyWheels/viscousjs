@@ -144,3 +144,15 @@ test("new recursive render", () => {
     )
   ).toBe("XX-X-X");
 });
+
+test("filters", () => {
+  expect(parseAndRender(`{{ "hello" | capitalize }}`)).toEqual("HELLO");
+
+  expect(parseAndRender(`{{ 4 | at_least: 5 }}`)).toEqual("5");
+
+  expect(parseAndRender(`{{ 4 | at_most: 3 }}`)).toEqual("3");
+
+  expect(parseAndRender(`{{ 0 | default: 42 }}`)).toEqual("0");
+
+  expect(parseAndRender(`{{ false | default: 42 }}`)).toEqual("42");
+});

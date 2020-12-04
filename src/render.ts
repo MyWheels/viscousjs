@@ -1,4 +1,4 @@
-import { evaluate, builtinTruthy } from "./evaluate";
+import { evaluate, builtinTruthy, builtinHelpers } from "./evaluate";
 import { ExprNode, ViscousConfig, TmplNode } from "./shared";
 
 export function render(
@@ -12,6 +12,13 @@ export function render(
   function tru(expr: ExprNode) {
     return (config.isTruthy || builtinTruthy)(expr);
   }
+  function getHelper(name: string) {
+    const helper = config.helpers?.[name] || builtinHelpers[name];
+    if (!helper) {
+      throw new Error(`Unknown helper: ${name}`);
+    }
+    return helper;
+  }
 
   function r(child: TmplNode): string {
     return render(child, env, config);
@@ -22,7 +29,12 @@ export function render(
   } else if (node.type === "raw") {
     return node.content;
   } else if (node.type === "interpolation") {
-    return "" + ev(node.expression);
+    let value = ev(node.expression);
+    for (const { filter, args } of node.filters) {
+      const helper = getHelper(filter);
+      value = helper(value, ...args.map(ev));
+    }
+    return "" + value;
   } else if (node.type === "cond") {
     return tru(ev(node.condition))
       ? node.children.map(r).join("")
