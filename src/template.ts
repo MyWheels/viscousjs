@@ -1,37 +1,12 @@
 import P from "parsimmon";
 
 import { Expr } from "./expression";
-import { ExprNode, Id } from "./shared";
+import { ExprNode, Id, TmplNode, RootNode } from "./shared";
 
 type Meta = {
   stripLeft: boolean;
   stripRight: boolean;
 };
-
-export type IfTmplPiece = P.Node<"if", Meta & { content: ExprNode }>;
-export type UnlessTmplPiece = P.Node<"unless", Meta & { content: ExprNode }>;
-export type ElseIfTmplPiece = P.Node<"elseif", Meta & { content: ExprNode }>;
-export type ElseTmplPiece = P.Node<"else", Meta>;
-export type ForTmplPiece = P.Node<
-  "for",
-  Meta & { content: { id: string; collection: ExprNode } }
->;
-export type EndTmplPiece = P.Node<"end", Meta>;
-export type InterpolationTmplPiece = P.Node<
-  "interpolation",
-  Meta & { content: ExprNode }
->;
-export type RawTmplPiece = P.Node<"raw", { content: string }>;
-
-export type TmplPiece =
-  | IfTmplPiece
-  | UnlessTmplPiece
-  | ElseIfTmplPiece
-  | ElseTmplPiece
-  | ForTmplPiece
-  | EndTmplPiece
-  | InterpolationTmplPiece
-  | RawTmplPiece;
 
 const _ = P.regexp(/[ \n\t]*/);
 const __ = P.regexp(/[ \n\t]+/);
@@ -51,103 +26,143 @@ function andThenParseAsExpression(str: string) {
   });
 }
 
-const Interpolation: P.Parser<InterpolationTmplPiece> = P.seqObj<{
-  stripLeft: boolean;
-  content: ExprNode;
-  stripRight: boolean;
-}>(
-  ["stripLeft", InterpOpen],
-  _,
-  [
-    "content",
-    P((input, i) => {
-      let j = i;
-      while (j < input.length && !input.slice(j).match(/^[ \n\t]*-?\}\}/)) {
-        j++;
-      }
-      if (j >= input.length) {
-        return P.makeFailure(j, "%}");
-      } else {
-        return P.makeSuccess(j, input.slice(i, j));
-      }
-    }).chain(andThenParseAsExpression),
-  ],
-  _,
-  ["stripRight", InterpClose]
-).node("interpolation");
-
-/**
- * Reads a block of the shape {%-? (content) -?%}
- */
-function makeBlock<Name extends string, Content>(
-  name: Name,
-  parse: P.Parser<Content>
-): P.Parser<P.Node<Name, Meta & { content: Content }>> {
-  return P.seqObj<{
-    stripLeft: boolean;
-    content: Content;
-    stripRight: boolean;
-  }>(["stripLeft", BlockOpen], _, ["content", parse], _, [
-    "stripRight",
-    BlockClose,
-  ]).node(name);
-}
-
-/**
- * Reads the rest of a block's content, assuming
- *  it's an expression to be parsed later
- */
-const UnaryBlockExpr: P.Parser<ExprNode> = P((input, i) => {
+const ReadUntilEndOfBlock = P((input, i) => {
   let j = i;
-  while (j < input.length && !input.slice(j).match(/^[ \n\t]*-?%\}/)) {
+  while (j < input.length && !input.slice(j).match(/^[ \n\t]*-?[%\}]\}/)) {
     j++;
   }
   if (j >= input.length) {
-    return P.makeFailure(j, "%}");
+    return P.makeFailure(j, ["%}", "}}"]);
   } else {
     return P.makeSuccess(j, input.slice(i, j));
   }
-}).chain(andThenParseAsExpression);
+});
 
-const IfOpen: P.Parser<IfTmplPiece> = makeBlock(
-  "if",
-  P.string("if").then(__).then(UnaryBlockExpr)
-);
-const UnlessOpen: P.Parser<UnlessTmplPiece> = makeBlock(
-  "unless",
-  P.string("unless").then(__).then(UnaryBlockExpr)
-);
-const Else: P.Parser<ElseTmplPiece> = makeBlock(
-  "else",
-  P.string("else").result(null)
-);
-const ElseIf: P.Parser<ElseIfTmplPiece> = makeBlock(
-  "elseif",
-  P.regexp(/el(s(e ?)?)?if/)
-    .then(__)
-    .then(UnaryBlockExpr)
-);
-const For: P.Parser<ForTmplPiece> = makeBlock(
-  "for",
-  P.seqObj<{
-    id: string;
-    collection: ExprNode;
-  }>(
-    P.string("for"),
-    __,
-    ["id", Id],
-    __,
-    P.alt(P.string("in"), P.string("of")),
-    __,
-    ["collection", UnaryBlockExpr]
-  )
-);
-const End: P.Parser<EndTmplPiece> = makeBlock(
-  "end",
-  P.alt(P.regex(/end(if|unless)?/)).result(null)
-);
+// Reads a block of the shape {%-? (content) -?%}
+function inControlBlock<T extends object>(
+  parseContent: P.Parser<T>
+): P.Parser<T & Meta> {
+  return P.seq(BlockOpen, _, parseContent, _, BlockClose).map(
+    ([stripLeft, , content, , stripRight]) => {
+      return { ...content, stripLeft, stripRight };
+    }
+  );
+}
+// Reads a block of the shape {%-? (content) -?%}
+function inInterpolationBlock<T extends object>(
+  parseContent: P.Parser<T>
+): P.Parser<T & Meta> {
+  return P.seq(InterpOpen, _, parseContent, _, InterpClose).map(
+    ([stripLeft, , content, , stripRight]) => {
+      return { ...content, stripLeft, stripRight };
+    }
+  );
+}
 
-const Raw: P.Parser<RawTmplPiece> = P((input, i) => {
+type InterpolationBlock = Meta & {
+  type: "interpolation";
+  expression: ExprNode;
+};
+
+const Interpolation: P.Parser<InterpolationBlock> = ReadUntilEndOfBlock.chain(
+  andThenParseAsExpression
+)
+  .map((expression) => {
+    return { type: "interpolation" as "interpolation", expression };
+  })
+  .thru(inInterpolationBlock);
+
+type IfBlock = Meta & {
+  type: "if";
+  condition: ExprNode;
+};
+
+const If: P.Parser<IfBlock> = P.string("if")
+  .then(__)
+  .then(ReadUntilEndOfBlock)
+  .chain(andThenParseAsExpression)
+  .map((condition) => {
+    return { type: "if" as "if", condition };
+  })
+  .thru(inControlBlock);
+
+type UnlessBlock = Meta & {
+  type: "unless";
+  condition: ExprNode;
+};
+
+const Unless: P.Parser<UnlessBlock> = P.string("unless")
+  .then(__)
+  .then(ReadUntilEndOfBlock)
+  .chain(andThenParseAsExpression)
+  .map((condition) => {
+    return { type: "unless" as "unless", condition };
+  })
+  .thru(inControlBlock);
+
+type ElseBlock = Meta & {
+  type: "else";
+};
+
+const Else: P.Parser<ElseBlock> = P.string("else")
+  .map(() => {
+    return { type: "else" as "else" };
+  })
+  .thru(inControlBlock);
+
+type ElseIfBlock = Meta & {
+  type: "elseif";
+  condition: ExprNode;
+};
+
+const ElseIf: P.Parser<ElseIfBlock> = P.regexp(/el(s(e ?)?)?if/)
+  .then(__)
+  .then(ReadUntilEndOfBlock)
+  .chain(andThenParseAsExpression)
+  .map((condition) => {
+    return { type: "elseif" as "elseif", condition };
+  })
+  .thru(inControlBlock);
+
+type ForBlock = Meta & {
+  type: "for";
+  item: string;
+  collection: ExprNode;
+};
+
+const For: P.Parser<ForBlock> = P.seqObj<{
+  item: string;
+  collection: ExprNode;
+}>(
+  P.string("for"),
+  __,
+  ["item", Id],
+  __,
+  P.alt(P.string("in"), P.string("of")),
+  __,
+  ["collection", ReadUntilEndOfBlock.chain(andThenParseAsExpression)]
+)
+  .map((info) => {
+    return { type: "for" as "for", ...info };
+  })
+  .thru(inControlBlock);
+
+type EndBlock = Meta & {
+  type: "end";
+};
+
+const End: P.Parser<EndBlock> = P.alt(P.regex(/end(if|unless|for)?/))
+  .map(() => {
+    return { type: "end" as "end" };
+  })
+  .thru(inControlBlock);
+
+type RawBlock = Meta & {
+  type: "raw";
+  content: string;
+};
+
+const Raw: P.Parser<RawBlock> = P((input, i) => {
   let j = i;
   while (
     j < input.length &&
@@ -157,103 +172,139 @@ const Raw: P.Parser<RawTmplPiece> = P((input, i) => {
   }
   if (j > i) {
     return P.makeSuccess(j, {
+      stripLeft: false,
+      stripRight: false,
+      type: "raw" as "raw",
       content: input.slice(i, j),
     });
   } else {
     return P.makeFailure(j, "raw content");
   }
-}).node("raw");
+});
 
-export const Tmpl = P.alt<TmplPiece>(
-  IfOpen,
-  UnlessOpen,
+type Block =
+  | InterpolationBlock
+  | IfBlock
+  | UnlessBlock
+  | ElseBlock
+  | ElseIfBlock
+  | ForBlock
+  | EndBlock
+  | RawBlock;
+
+export const TmplBlock = P.alt<Block>(
+  Interpolation,
+  If,
+  Unless,
   Else,
   ElseIf,
-  End,
   For,
-  Interpolation,
+  End,
   Raw
-).many();
+);
 
-export interface TmplNodeBase {
-  parent: TmplNodeBase;
-  type:
-    | "root"
-    | "if"
-    | "else"
-    | "elseif"
-    | "interpolation"
-    | "raw"
-    | "for"
-    | "unless";
-  children: TmplNodeBase[];
-  piece?: TmplPiece;
-}
+export const Tmpl: P.Parser<RootNode> = TmplBlock.many().map(intoAST);
 
-export function intoAST(pieces: TmplPiece[]) {
-  const root: TmplNodeBase = {
+export function intoAST(blocks: Block[]) {
+  let _uid = -1;
+  const _parents: TmplNode[] = [];
+  const _end: TmplNode[] = [];
+
+  const root: TmplNode = {
+    id: ++_uid,
     type: "root",
     children: [],
-    get parent() {
-      return root;
-    },
   };
 
-  let parent = root;
+  _parents[root.id] = root;
+  _end[root.id] = root;
 
-  for (const piece of pieces) {
-    if (piece.name === "raw") {
-      parent.children.push({ parent, type: "raw", children: [], piece });
-    } else if (piece.name === "interpolation") {
-      parent.children.push({
-        parent,
-        type: "interpolation",
+  let parent: TmplNode = root;
+
+  function addChild(node: TmplNode): TmplNode {
+    _parents[node.id] = parent;
+    _end[node.id] = parent;
+    parent.children.push(node);
+    return node;
+  }
+
+  function addElse(node: TmplNode): TmplNode {
+    if (parent.type !== "cond") {
+      throw new Error("misplaced {% else %}");
+    }
+    _parents[node.id] = parent;
+    _end[node.id] = _end[parent.id];
+    parent.else = node;
+    return node;
+  }
+
+  // First, a whitespace stripping phase
+  for (let i = 0; i < blocks.length; i++) {
+    const prev: undefined | Block = blocks[i - 1];
+    const curr = blocks[i];
+    const next: undefined | Block = blocks[i + 1];
+    if (curr.stripLeft && prev?.type === "raw") {
+      prev.content = prev.content.replace(/[ \n\t]*$/, "");
+    }
+    if (curr.stripRight && next?.type === "raw") {
+      next.content = next.content.replace(/^[ \n\t]*/, "");
+    }
+  }
+
+  // Then, construct the AST
+  for (const block of blocks) {
+    if (block.type === "raw") {
+      addChild({
+        id: ++_uid,
+        type: "raw",
+        content: block.content,
         children: [],
-        piece,
       });
-    } else if (piece.name === "if") {
-      const node: TmplNodeBase = { parent, type: "if", children: [], piece };
-      parent.children.push(node);
-      parent = node;
-    } else if (piece.name === "unless") {
-      const node: TmplNodeBase = {
-        parent,
-        type: "unless",
+    } else if (block.type === "interpolation") {
+      addChild({
+        id: ++_uid,
+        type: "interpolation",
+        expression: block.expression,
         children: [],
-        piece,
-      };
-      parent.children.push(node);
-      parent = node;
-    } else if (piece.name === "for") {
-      const node: TmplNodeBase = { parent, type: "for", children: [], piece };
-      parent.children.push(node);
-      parent = node;
-    } else if (piece.name === "else") {
-      if (!["unless", "if", "elseif"].includes(parent.type)) {
-        throw new Error("misplaced {% else %}");
-      }
-      const node: TmplNodeBase = {
-        parent: parent.parent,
+      });
+    } else if (block.type === "for") {
+      parent = addChild({
+        id: ++_uid,
+        type: "for",
+        item: block.item,
+        collection: block.collection,
+        children: [],
+      });
+    } else if (block.type === "if") {
+      parent = addChild({
+        id: ++_uid,
+        type: "cond",
+        condition: block.condition,
+        children: [],
+      });
+    } else if (block.type === "unless") {
+      const condition: ExprNode = ["not", block.condition];
+      parent = addChild({
+        id: ++_uid,
+        type: "cond",
+        condition,
+        children: [],
+      });
+    } else if (block.type === "else") {
+      parent = addElse({
+        id: ++_uid,
         type: "else",
         children: [],
-        piece: parent.piece, // (!)
-      };
-      parent.parent.children.push(node);
-      parent = node;
-    } else if (piece.name === "elseif") {
-      if (!["if", "elseif"].includes(parent.type)) {
-        throw new Error("misplaced {% else if %}");
-      }
-      const node: TmplNodeBase = {
-        parent: parent.parent,
-        type: "elseif",
+      });
+    } else if (block.type === "elseif") {
+      parent = addElse({
+        id: ++_uid,
+        type: "cond",
+        condition: block.condition,
         children: [],
-        piece,
-      };
-      parent.parent.children.push(node);
-      parent = parent.parent;
-    } else if (piece.name === "end") {
-      parent = parent.parent;
+      });
+    } else if (block.type === "end") {
+      parent = _end[parent.id];
     }
   }
 

@@ -10,10 +10,10 @@ test("evaluation", () => {
   expect(
     parseAndRender(
       `{% unless resource.fuelType == 'elektrisch' and (decisions.parkedAtChargingStation == 'yes' or resource.fuelLevel < 75 or resource.parkingType == 'parking_spot') -%}
-    show question
-{%- else -%}
-    don't show question
-{%- endif %}`,
+      show question
+  {%- else -%}
+      don't show question
+  {%- endif %}`,
       {
         resource: {
           fuelType: "elektrisch",
@@ -25,7 +25,7 @@ test("evaluation", () => {
         },
       }
     )
-  ).toEqual("don't show question");
+  ).toContain("don't show question");
 });
 
 test("progress", () => {

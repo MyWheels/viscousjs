@@ -37,3 +37,41 @@ export type ViscousConfig = {
   verbose?: boolean;
   evaluate?: (expr: ExprNode, env?: any, config?: ViscousConfig) => any;
 };
+
+export type TmplNodeBase = {
+  id: number;
+  children: TmplNode[];
+};
+
+export type RootNode = TmplNodeBase & {
+  type: "root";
+};
+export type InterpolationNode = TmplNodeBase & {
+  type: "interpolation";
+  expression: ExprNode;
+};
+export type CondNode = TmplNodeBase & {
+  type: "cond"; // used for `if`, `unless`, and `elseif`
+  condition: ExprNode;
+  else?: TmplNode;
+};
+export type ElseNode = TmplNodeBase & {
+  type: "else";
+};
+export type ForNode = TmplNodeBase & {
+  type: "for";
+  item: string;
+  collection: ExprNode;
+};
+export type RawNode = TmplNodeBase & {
+  type: "raw";
+  content: string;
+};
+
+export type TmplNode =
+  | RootNode
+  | InterpolationNode
+  | CondNode
+  | ElseNode
+  | ForNode
+  | RawNode;

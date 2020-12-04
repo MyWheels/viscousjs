@@ -1,6 +1,76 @@
-import { Tmpl, intoAST } from "../template";
+import { Tmpl } from "../template";
 
-test("nested conditional blocks", () => {
+test("basics", () => {
+  expect(Tmpl.tryParse("hello")).toMatchObject({
+    type: "root",
+    children: [{ type: "raw", content: "hello" }],
+  });
+
+  expect(Tmpl.tryParse("{{ hello }} world")).toMatchObject({
+    type: "root",
+    children: [
+      { type: "interpolation", expression: ["id", "hello"] },
+      { type: "raw", content: " world" },
+    ],
+  });
+
+  expect(Tmpl.tryParse("{% if true %}A{% end %}")).toMatchObject({
+    type: "root",
+    children: [
+      {
+        type: "cond",
+        condition: ["bool", true],
+        children: [{ type: "raw", content: "A" }],
+      },
+    ],
+  });
+
+  expect(Tmpl.tryParse("{% if true %}A{% else %}B{% end %}")).toMatchObject({
+    type: "root",
+    children: [
+      {
+        type: "cond",
+        condition: ["bool", true],
+        children: [{ type: "raw", content: "A" }],
+        else: {
+          type: "else",
+          children: [{ type: "raw", content: "B" }],
+        },
+      },
+    ],
+  });
+
+  const nestedIfs = [
+    { type: "raw" },
+    {
+      type: "cond",
+      condition: ["bool", true],
+      children: [
+        { type: "raw" },
+        {
+          type: "cond",
+          condition: ["bool", false],
+          children: [
+            {
+              type: "raw",
+              content: expect.stringContaining("A"),
+            },
+          ],
+          else: {
+            type: "else",
+            children: [{ type: "raw", content: expect.stringContaining("B") }],
+          },
+        },
+        { type: "raw" },
+      ],
+      else: {
+        type: "else",
+        children: [{ type: "raw", content: expect.stringContaining("C") }],
+      },
+    },
+    { type: "raw" },
+  ];
+
   expect(
     Tmpl.tryParse(`
       {%- if true -%}
@@ -13,201 +83,117 @@ test("nested conditional blocks", () => {
         C
       {%- endif -%}
     `)
-  ).toMatchObject([
-    {
-      name: "raw", // opening
-    },
-    {
-      name: "if", // if true
-    },
-    {
-      name: "raw",
-    },
-    {
-      name: "if", // if false
-    },
-    {
-      name: "raw", // A
-    },
-    {
-      name: "else", // else
-    },
-    {
-      name: "raw", // B
-    },
-    {
-      name: "end", // endif
-    },
-    {
-      name: "raw",
-    },
-    {
-      name: "else", // else
-    },
-    {
-      name: "raw", // C
-    },
-    {
-      name: "end",
-    },
-    {
-      name: "raw",
-    },
-  ]);
-});
-
-test("atoms", () => {
-  expect(Tmpl.tryParse(`hello`)).toMatchObject([
-    {
-      name: "raw",
-      value: { content: "hello" },
-    },
-  ]);
-
-  expect(Tmpl.tryParse(`hello {{- world }}`)).toMatchObject([
-    {
-      name: "raw",
-      value: { content: "hello " },
-    },
-    {
-      name: "interpolation",
-      value: {
-        stripLeft: true,
-        stripRight: false,
-        content: ["id", "world"],
-      },
-    },
-  ]);
-
-  expect(
-    Tmpl.tryParse(`{% if
-      a.b == c
-         -%} hello   {{- world }}  {%endif%}`)
-  ).toMatchObject([
-    {
-      name: "if",
-      value: {
-        stripLeft: false,
-        stripRight: true,
-        content: ["==", ["member", ["id", "a"], "b"], ["id", "c"]],
-      },
-    },
-    {
-      name: "raw",
-      value: { content: " hello   " },
-    },
-    {
-      name: "interpolation",
-      value: {
-        stripLeft: true,
-        stripRight: false,
-        content: ["id", "world"],
-      },
-    },
-    {
-      name: "raw",
-      value: { content: "  " },
-    },
-    {
-      name: "end",
-      value: {
-        stripLeft: false,
-        stripRight: false,
-      },
-    },
-  ]);
-});
-
-test("for loops", () => {
-  expect(Tmpl.tryParse(`{% for item in certain.items %}`)).toMatchObject([
-    {
-      name: "for",
-      value: {
-        content: {
-          id: "item",
-          collection: ["member", ["id", "certain"], "items"],
-        },
-      },
-    },
-  ]);
-});
-
-test("ast", () => {
-  function raw(content: string) {
-    return {
-      type: "raw",
-      piece: {
-        name: "raw",
-        value: { content },
-      },
-    };
-  }
-
-  function basicIfElse(ca: any, cb: any) {
-    return [
-      {
-        type: "if",
-        piece: {
-          name: "if",
-          value: { content: ["bool", true] },
-        },
-        children: ca,
-      },
-      {
-        type: "else",
-        piece: {
-          name: "if",
-          value: { content: ["bool", true] },
-        },
-        children: cb,
-      },
-    ];
-  }
-
-  expect(Tmpl.map(intoAST).tryParse("A")).toMatchObject({
-    type: "root",
-    children: [raw("A")],
-  });
-
-  expect(
-    Tmpl.map(intoAST).tryParse("{% if true %}A{% else %}B{% end %}")
   ).toMatchObject({
     type: "root",
-    children: [...basicIfElse([raw("A")], [raw("B")])],
+    children: nestedIfs,
   });
 
   expect(
-    Tmpl.map(intoAST).tryParse(
-      "{% if true %}{% if true %}A{% else %}B{% end %}{% else %}C{% end %}"
-    )
+    Tmpl.tryParse(`
+      {% for thing in things %}
+        {%- if true -%}
+          {%- if false -%}
+            A
+          {%- else -%}
+            B
+          {%- endif -%}
+        {%- else -%}
+          C
+        {%- endif -%}
+      {% end %}
+    `)
   ).toMatchObject({
     type: "root",
     children: [
-      ...basicIfElse([...basicIfElse([raw("A")], [raw("B")])], [raw("C")]),
+      { type: "raw" },
+      {
+        type: "for",
+        item: "thing",
+        collection: ["id", "things"],
+        children: nestedIfs,
+      },
+      { type: "raw" },
     ],
   });
 
   expect(
-    Tmpl.map(intoAST).tryParse(
-      "{% for item in items %}{% if true %}{% if true %}A{% else %}B{% end %}{% else %}C{% end %}{% end %}"
-    )
+    Tmpl.tryParse(`{% if
+       a.b == c
+          -%} hello   {{- world }}  {%endif%}`)
   ).toMatchObject({
     type: "root",
     children: [
       {
-        type: "for",
-        piece: {
-          name: "for",
-          value: {
-            content: {
-              id: "item",
-              collection: ["id", "items"],
-            },
-          },
-        },
+        type: "cond",
+        condition: ["==", ["member", ["id", "a"], "b"], ["id", "c"]],
         children: [
-          ...basicIfElse([...basicIfElse([raw("A")], [raw("B")])], [raw("C")]),
+          { type: "raw", content: "hello" },
+          {
+            type: "interpolation",
+            expression: ["id", "world"],
+          },
+          { type: "raw", content: "  " },
         ],
+      },
+    ],
+  });
+});
+
+test("question", () => {
+  expect(
+    Tmpl.tryParse(`{% unless resource.fuelType == 'elektrisch' and (decisions.parkedAtChargingStation == 'yes' or resource.fuelLevel < 75 or resource.parkingType == 'parking_spot') -%}
+      show question
+  {%- else -%}
+      don't show question
+  {%- endif %}`)
+  ).toMatchObject({
+    type: "root",
+    children: [
+      {
+        type: "cond",
+        condition: [
+          "not",
+          [
+            "and",
+            [
+              "==",
+              ["member", ["id", "resource"], "fuelType"],
+              ["str", "elektrisch"],
+            ],
+            [
+              "or",
+              [
+                "or",
+                [
+                  "==",
+                  ["member", ["id", "decisions"], "parkedAtChargingStation"],
+                  ["str", "yes"],
+                ],
+                ["<", ["member", ["id", "resource"], "fuelLevel"], ["num", 75]],
+              ],
+              [
+                "==",
+                ["member", ["id", "resource"], "parkingType"],
+                ["str", "parking_spot"],
+              ],
+            ],
+          ],
+        ],
+        children: [
+          {
+            type: "raw",
+            content: "show question",
+          },
+        ],
+        else: {
+          type: "else",
+          children: [
+            {
+              type: "raw",
+              content: "don't show question",
+            },
+          ],
+        },
       },
     ],
   });
