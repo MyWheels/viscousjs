@@ -1,34 +1,6 @@
 import P from "parsimmon";
 
-import { Id } from "./shared";
-
-export type Op =
-  | "-"
-  | "not"
-  | "^"
-  | "*"
-  | "/"
-  | "=="
-  | "==="
-  | "!="
-  | "!=="
-  | "<="
-  | "<"
-  | ">="
-  | ">"
-  | "contains"
-  | "+"
-  | "and"
-  | "or";
-
-export type ExprNode =
-  | ["bool", boolean]
-  | ["num", number]
-  | ["str", string]
-  | ["id", string]
-  | ["member", ExprNode, string]
-  | ["helper", string, ExprNode[]]
-  | [Op, ...ExprNode[]];
+import { Id, Op, ExprNode } from "./shared";
 
 // Turn escaped characters into real ones (e.g. "\\n" becomes "\n").
 function interpretEscapes(str: string) {

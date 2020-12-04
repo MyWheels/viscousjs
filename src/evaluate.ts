@@ -1,4 +1,4 @@
-import { ExprNode } from "./expression";
+import { ExprNode, ViscousConfig } from "./shared";
 
 export function builtinTruthy(data: any) {
   return (
@@ -19,17 +19,14 @@ export const builtinHelpers: Record<string, Function> = {
   },
 };
 
-export type EvalConfig = {
-  helpers?: Record<string, Function>;
-  isTruthy?: (data: any) => boolean;
-  throwOnError?: boolean;
-  verbose?: boolean;
-};
-
 export function evaluate(
   expr: ExprNode,
   env: any = {},
-  { isTruthy = builtinTruthy, helpers, throwOnError = false }: EvalConfig = {}
+  {
+    isTruthy = builtinTruthy,
+    helpers,
+    throwOnError = false,
+  }: ViscousConfig = {}
 ): any {
   helpers = {
     ...builtinHelpers,

@@ -1,7 +1,7 @@
 import P from "parsimmon";
 
-import { ExprNode, Expr } from "./expression";
-import { Id } from "./shared";
+import { Expr } from "./expression";
+import { ExprNode, Id } from "./shared";
 
 type Meta = {
   stripLeft: boolean;

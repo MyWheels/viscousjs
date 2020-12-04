@@ -1,4 +1,3 @@
-import { ExprNode } from "./expression";
 import {
   TmplPiece,
   TmplNodeBase,
@@ -7,20 +6,13 @@ import {
   IfTmplPiece,
   ForTmplPiece,
 } from "./template";
-import { evaluate, builtinTruthy, EvalConfig } from "./evaluate";
-
-export type RenderConfig = {
-  helpers?: Record<string, Function>;
-  isTruthy?: (data: any) => boolean;
-  throwOnError?: boolean;
-  verbose?: boolean;
-  evaluate?: (expr: ExprNode, env?: any, config?: EvalConfig) => any;
-};
+import { evaluate, builtinTruthy } from "./evaluate";
+import { ExprNode, ViscousConfig } from "./shared";
 
 export function renderAst(
   node: TmplNodeBase,
   env: any = {},
-  config: RenderConfig = {}
+  config: ViscousConfig = {}
 ): string {
   function ev(expr: ExprNode) {
     return (config.evaluate || evaluate)(expr, env, config);
@@ -72,7 +64,7 @@ export function renderAst(
 export function render(
   nodes: TmplPiece[],
   env: any = {},
-  config: RenderConfig = {}
+  config: ViscousConfig = {}
 ) {
   function ev(expr: ExprNode) {
     return (config.evaluate || evaluate)(expr, env, config);
