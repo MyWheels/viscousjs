@@ -17,9 +17,9 @@ It doesn't yet have feature parity, because these things (amongst others) are st
 - Other kinds of iteration
 - The comment, cycle, increment, decrement, raw, and capture tags
 
-And then there are certain features that I'm not planning to add (unless someone wishes to contribute):
+And then there are certain features that I'm probably won'y be adding (unless someone wishes to contribute):
 
-- The assignment, include, case/when, layout, render, and tablerow tags
+- The include, case/when, layout, render, and tablerow tags
 
 ## Usage
 
@@ -29,9 +29,9 @@ import { parseAndEvaluate, parseAndRender } from "@mywheels/viscousjs";
 const data = {
   happy: true,
   hello: {
-    world: 40;
-  }
-}
+    world: 40,
+  },
+};
 
 // 42
 const result = parseAndEvaluate(`hello.world + 2`, data);
@@ -42,7 +42,6 @@ const output = parseAndRender(`
     clap your hands
   {%- end -%}
 `);
-
 ```
 
 ## Overview
@@ -66,6 +65,8 @@ const output = parseAndRender(`
     - or `{% for <name> of <arr> %}`
   - `{% endfor %}`
     - or just `{% end %}`
+- **assignment**
+  - `{% assign <name> = <expression> %}`
 
 ### Interpolation
 
@@ -128,7 +129,7 @@ parseAndRender(`
 
 Like Liquid, an expression is considered truthy whenever it's a `true`, a number, a string or an object. So, also `""` and `0` and `[]` are considered truthy.
 
-You can also provide your own
+You can also provide your own truthiness check with the `isTruthy` config key.
 
 ### Failure
 
@@ -152,6 +153,7 @@ More will be added soon. (And just make a PR if you want to contribute yours :))
 - **general purpose**
 
   - `default` (_fallback_)
+  - `stringify` (_data_)
 
 - **numeric**
 

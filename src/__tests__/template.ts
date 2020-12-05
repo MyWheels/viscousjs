@@ -139,6 +139,19 @@ test("basics", () => {
   });
 });
 
+test("assignment", () => {
+  expect(Tmpl.tryParse(`{% assign name = "Kelley" %}`)).toMatchObject({
+    type: "root",
+    children: [
+      {
+        type: "assign",
+        item: "name",
+        expression: ["str", "Kelley"],
+      },
+    ],
+  });
+});
+
 test("question", () => {
   expect(
     Tmpl.tryParse(`{% unless resource.fuelType == 'elektrisch' and (decisions.parkedAtChargingStation == 'yes' or resource.fuelLevel < 75 or resource.parkingType == 'parking_spot') -%}

@@ -69,6 +69,21 @@ const Interpolation: P.Parser<InterpolationBlock> = P.seq(
   })
   .thru(inInterpolationBlock);
 
+type AssignBlock = Meta & {
+  type: "assign";
+  item: string;
+  expression: ExprNode;
+};
+
+const Assign: P.Parser<AssignBlock> = P.seq(
+  P.string("assign").skip(__).then(Id).skip(_).skip(P.string("=").skip(_)),
+  Expr
+)
+  .map(([item, expression]) => {
+    return { type: "assign" as "assign", item, expression };
+  })
+  .thru(inControlBlock);
+
 type IfBlock = Meta & {
   type: "if";
   condition: ExprNode;
@@ -178,6 +193,7 @@ const Raw: P.Parser<RawBlock> = P((input, i) => {
 
 type Block =
   | InterpolationBlock
+  | AssignBlock
   | IfBlock
   | UnlessBlock
   | ElseBlock
@@ -188,6 +204,7 @@ type Block =
 
 export const TmplBlock = P.alt<Block>(
   Interpolation,
+  Assign,
   If,
   Unless,
   Else,
@@ -252,6 +269,14 @@ export function intoAST(blocks: Block[]) {
         id: ++_uid,
         type: "raw",
         content: block.content,
+        children: [],
+      });
+    } else if (block.type === "assign") {
+      addChild({
+        id: ++_uid,
+        type: "assign",
+        item: block.item,
+        expression: block.expression,
         children: [],
       });
     } else if (block.type === "interpolation") {

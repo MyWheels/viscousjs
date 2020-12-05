@@ -169,3 +169,72 @@ test("filters", () => {
     )
   ).toEqual("10");
 });
+
+test("rendering truthy/falsey values", () => {
+  expect(parseAndRender(`{{ world }}`)).toEqual("");
+
+  expect(parseAndRender(`{{ arr }}`, { arr: [] })).toEqual("");
+
+  expect(parseAndRender(`{{ item }}`, { item: null })).toEqual("");
+
+  expect(parseAndRender(`{{ item }}`, { item: false })).toEqual("false");
+
+  expect(parseAndRender(`{{ item }}`, { item: true })).toEqual("true");
+});
+
+test("assignment", () => {
+  expect(
+    parseAndRender(`{{ world }}{% assign world = "world" %}hello {{ world }}`)
+  ).toEqual("hello world");
+
+  expect(
+    parseAndRender(
+      `{% for item in items %}{% assign num = 1 %}{{ num }}{% end %}{{ num + 5 }}`,
+      { items: [1, 2, 3] }
+    )
+  ).toEqual("111");
+});
+
+test("assignment does not escape blocks", () => {
+  expect(
+    parseAndRender(
+      `{% for item in items %}{% assign num = 1 %}{{ num }}{% end %}{{ num + 5 }}`
+    )
+  ).toEqual("");
+
+  expect(
+    parseAndRender(
+      `{% for item in items %}{% assign num = 1 %}{{ num }}{% end %}{{ num + 5 }}`,
+      { items: [] }
+    )
+  ).toEqual("");
+
+  expect(
+    parseAndRender(
+      `{% for item in items %}{% assign num = 1 %}{{ num }}{% end %}{{ num + 5 }}`,
+      { items: [] }
+    )
+  ).toEqual("");
+
+  expect(
+    parseAndRender(`{% if true %}{% assign num = 1 %}{% end %}{{ num + 5 }}`)
+  ).toEqual("");
+
+  expect(
+    parseAndRender(
+      `{% if true %}{% assign num = 1 %}{{ num }}{% else %}{{ num + 2 }}{% end %}{{ num + 5 }}`
+    )
+  ).toEqual("1");
+
+  expect(
+    parseAndRender(
+      `{% assign num = 1 %}{% if false %}{{ num }}{% else %}{{ num + 2 }}{% end %}{{ num + 5 }}`
+    )
+  ).toEqual("36");
+
+  expect(
+    parseAndRender(
+      `{% if false %}{{ num }}{% else %}{% assign num = 1 %}{{ num + 2 }}{% end %}{{ num + 5 }}`
+    )
+  ).toEqual("3");
+});

@@ -1,67 +1,9 @@
-import { ExprNode, ViscousConfig } from "./shared";
-
-export function builtinTruthy(data: any) {
-  return (
-    data === true ||
-    typeof data === "string" ||
-    data === 0 ||
-    typeof data === "number" ||
-    !!data
-  );
-}
-
-export const builtinHelpers: Record<string, Function> = {
-  if(cond: any, a: any, b: any) {
-    return builtinTruthy(cond) ? a : b;
-  },
-  cond(cond: any, a: any, b: any) {
-    return builtinTruthy(cond) ? a : b;
-  },
-  abs(num: any) {
-    return Math.abs(num);
-  },
-  append(a: any, b: any) {
-    return a + b;
-  },
-  at_least(num: any, min: any) {
-    return Math.max(num, min);
-  },
-  at_most(num: any, max: any) {
-    return Math.min(num, max);
-  },
-  clamp(num: any, min: any, max: any) {
-    return Math.max(Math.min(num, max), min);
-  },
-  upcase(str: any) {
-    return (str + "").toLocaleUpperCase();
-  },
-  upper(str: any) {
-    return (str + "").toLocaleUpperCase();
-  },
-  downcase(str: any) {
-    return (str + "").toLocaleLowerCase();
-  },
-  lower(str: any) {
-    return (str + "").toLocaleLowerCase();
-  },
-  ceil(num: any) {
-    return Math.ceil(num);
-  },
-  floor(num: any) {
-    return Math.floor(num);
-  },
-  default(val: any, fallback: any) {
-    if (
-      !builtinTruthy(val) ||
-      val === "" ||
-      (Array.isArray(val) && val.length === 0)
-    ) {
-      return fallback;
-    } else {
-      return val;
-    }
-  },
-};
+import {
+  ExprNode,
+  ViscousConfig,
+  builtinTruthy,
+  builtinHelpers,
+} from "./shared";
 
 export function evaluate(
   expr: ExprNode,
