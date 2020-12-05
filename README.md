@@ -26,30 +26,150 @@ And then there are certain features that I'm not planning to add (unless someone
 ```ts
 import { parseAndEvaluate, parseAndRender } from "@mywheels/viscousjs";
 
-console.log(
-  parseAndEvaluate(`hello.world + 2`, {
-    hello: {
-      world: 40,
-    },
-  }) // 42
-);
+const data = {
+  happy: true,
+  hello: {
+    world: 40;
+  }
+}
 
-console.log(
-  parseAndEvaluate(`hello.world + 2 == 42`, {
-    hello: {
-      world: 40,
-    },
-  }) // true
-);
+// 42
+const result = parseAndEvaluate(`hello.world + 2`, data);
 
-console.log(
-  parseAndRender(
-    `{% if happy -%}
-        clap your hands
-      {%- end %}`,
-    {
-      happy: true,
-    }
-  ) // "clap your hands"
+// "clap your hands"
+const output = parseAndRender(`
+  {%- if happy -%}
+    clap your hands
+  {%- end -%}
+`);
+
+```
+
+## Overview
+
+### Control flow
+
+- **if**
+  - `{% if <cond> %}`
+  - `{% elsif <cond> %}`
+    - or `{% elseif <cond> %}`
+    - or `{% else if <cond> %}`
+  - `{% else %}`
+  - `{% endif %}`
+    - or just `{% end %}`
+- **unless**
+  - `{% unless <cond> %}`
+  - `{% endunless %}`
+    - or just `{% end %}`
+- **for**
+  - `{% for <name> in <arr> %}`
+    - or `{% for <name> of <arr> %}`
+  - `{% endfor %}`
+    - or just `{% end %}`
+
+### Interpolation
+
+- `{{ <expression> }}`
+- `{{ <expression> | <filter> }}`
+- `{{ <expression> | <filter>: <args> }}`
+- `{{ <expression> | ... | ... | ... }}`
+
+### Whitespace control
+
+Both interpolation and control flow blocks accept whitespace trimmers at either end, for example `{% if true -%}` or `{{- expr -}}`. These trim whitespace off of the preceding and/or succeeding raw template pieces.
+
+### Expressions
+
+You can form expressions with all the ordinary mathematical operators and comparators, double and triple (in)equality, and `contains` (which works for strings as well as arrays).
+
+Also, you can use helper functions in expressions like `max(a, b)` or `cond(d, a, b)`.
+
+### Filters
+
+Interpolation blocks accept filters, which transform the evaluated expression before interpolating it into the output.
+
+- `{{ name | upper }}` might become "ROSE"
+- `{{ 8 | max: 4 }}` becomes "4"
+
+You can use multiple filters:
+
+- `{{ 3.14 | min: 0 | ceil }}` becomes "4"
+
+You can pass multiple arguments:
+
+- `{{ 8 | clamp: 4, 6 }}` becomes "6"
+
+You can use expressions in filters:
+
+- `{{ fuelLevel | clamp: config.minLevel, config.maxLevel }}`
+
+### Providing your own helpers and filters
+
+Filters are just helpers which are passed the interpolated value as first argument. For example, `{{ 8 | max: 4 }}` evaluates as `max(8, 4)`.
+
+You can register additional helper functions in the `helpers` config key:
+
+```ts
+parseAndRender(`
+    {{ hello | world }}
+    {{ dino | raise: food, love }}
+  `,
+  data,
+  {
+    helpers: {
+      world(hello) { ... },
+      raise(dino, food, love) { ... },
+    },
+  }
 );
 ```
+
+### Truthiness
+
+Like Liquid, an expression is considered truthy whenever it's a `true`, a number, a string or an object. So, also `""` and `0` and `[]` are considered truthy.
+
+You can also provide your own
+
+### Failure
+
+If the template fails to parse or render, `parseAndEvaluate` will return `undefined`, and `parseAndRender` will return an empty string. If you want parse or runtime errors to be thrown instead, you pass the config key `throwOnError: true`.
+
+### Configuration
+
+```ts
+type ViscousConfig = {
+  helpers?: Record<string, Function>;
+  isTruthy?: (data: any) => boolean;
+  throwOnError?: boolean;
+  evaluate?: (expr: ExprNode, env?: any) => any;
+};
+```
+
+### Known helpers and filters
+
+More will be added soon. (And just make a PR if you want to contribute yours :))
+
+- **general purpose**
+
+  - `default` (_fallback_)
+
+- **numeric**
+
+  - `abs` (_num_)
+  - `ceil` (_num_)
+  - `floor` (_num_)
+  - `at_least` (_min_)
+  - `at_most` (_max_)
+  - `clamp` (_min, max_)
+
+- **strings**
+
+  - `append` (_str_)
+  - `upcase` (_str_)
+    - `upper` (_str_)
+  - `downcase` (_str_)
+    - `lower` (_str_)
+
+- **control**
+  - `if` (_cond, a, b_)
+    - `cond` (_cond, a, b_)

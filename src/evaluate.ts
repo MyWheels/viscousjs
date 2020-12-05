@@ -29,10 +29,19 @@ export const builtinHelpers: Record<string, Function> = {
   at_most(num: any, max: any) {
     return Math.min(num, max);
   },
-  capitalize(str: any) {
+  clamp(num: any, min: any, max: any) {
+    return Math.max(Math.min(num, max), min);
+  },
+  upcase(str: any) {
+    return (str + "").toLocaleUpperCase();
+  },
+  upper(str: any) {
     return (str + "").toLocaleUpperCase();
   },
   downcase(str: any) {
+    return (str + "").toLocaleLowerCase();
+  },
+  lower(str: any) {
     return (str + "").toLocaleLowerCase();
   },
   ceil(num: any) {

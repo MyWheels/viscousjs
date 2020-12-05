@@ -146,7 +146,7 @@ test("new recursive render", () => {
 });
 
 test("filters", () => {
-  expect(parseAndRender(`{{ "hello" | capitalize }}`)).toEqual("HELLO");
+  expect(parseAndRender(`{{ "hello" | upper }}`)).toEqual("HELLO");
 
   expect(parseAndRender(`{{ 4 | at_least: 5 }}`)).toEqual("5");
 
