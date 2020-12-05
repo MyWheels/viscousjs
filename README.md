@@ -16,6 +16,7 @@ It doesn't yet have feature parity, because these things (amongst others) are st
 - Helper loop variables like `forloop` and `index0` etc.
 - Other kinds of iteration
 - The comment, cycle, increment, decrement, raw, and capture tags
+- Async data / rendering
 
 And then there are certain features that I'm probably won'y be adding (unless someone wishes to contribute):
 
@@ -175,3 +176,11 @@ More will be added soon. (And just make a PR if you want to contribute yours :))
 - **control**
   - `if` (_cond, a, b_)
     - `cond` (_cond, a, b_)
+
+## Alternatives
+
+- [Liquid.js](https://liquidjs.com/) &mdash; the origin of Viscous.js
+- [Handlebars](https://handlebarsjs.com/) &mdash; all-time simplicity's favorite
+- [Twig.js](https://github.com/twigjs/twig.js) &mdash; quite similar to Liquid.js; a port of PHP's twig engine
+- [EJS](https://ejs.co/) &mdash; "JavaScript but then in a templating language", way more powerful but not ideal as a content format
+- ...and more...
