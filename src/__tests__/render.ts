@@ -155,4 +155,17 @@ test("filters", () => {
   expect(parseAndRender(`{{ 0 | default: 42 }}`)).toEqual("0");
 
   expect(parseAndRender(`{{ false | default: 42 }}`)).toEqual("42");
+
+  expect(
+    parseAndRender(
+      `{{ fuelLevel | clamp: config.minLevel, config.maxLevel }}`,
+      {
+        fuelLevel: 5,
+        config: {
+          minLevel: 10,
+          maxLevel: 20,
+        },
+      }
+    )
+  ).toEqual("10");
 });
