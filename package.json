@@ -1,6 +1,6 @@
 {
   "name": "@mywheels/viscousjs",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "A simple templating language similar to Liquid",
   "keywords": [
     "templating",
@@ -20,16 +20,12 @@
     "url": "https://github.com/mywheels/viscousjs"
   },
   "sideEffects": false,
-  "files": [
-    "lib/**/*"
-  ],
   "scripts": {
-    "build": "yarn build:module && yarn build:umd",
+    "clean": "rm -rf lib",
+    "build": "yarn clean && yarn build:module && yarn build:umd",
     "build:module": "microbundle -f es,cjs",
     "build:umd": "microbundle -f umd --external none",
-    "test": "jest --config jestconfig.json",
-    "prepublish": "yarn test",
-    "prepare": "yarn build"
+    "test": "jest --config jestconfig.json"
   },
   "dependencies": {
     "parsimmon": "^1.16.0"
@@ -41,5 +37,6 @@
     "microbundle": "^0.12.4",
     "ts-jest": "^26.4.4",
     "typescript": "^4.1.2"
-  }
+  },
+  "prettier": {}
 }
