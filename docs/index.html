@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=block&text=%20!%22%23%24%25%26'()*%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~%C2%AD%C2%BC%C3%A9%C3%AB%C3%AF%C3%B3%C3%B6%E2%80%93%E2%80%98%E2%80%99%E2%80%9C%E2%80%9D%E2%82%AC%E2%86%90%E2%86%92"
+      rel="stylesheet"
+    />
+    <title>Viscous.js</title>
+    <style>
+      :root {
+        --sans: "Source Sans Pro", system-ui, -apple-system, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+        --transparent: transparent;
+        --current: currentColor;
+        --white: #fff;
+        --gray50: #f9fafb;
+        --gray100: #f0f2f4;
+        --gray200: #e3e7ea;
+        --gray300: #d1d6db;
+        --gray400: #aeb5bd;
+        --gray500: #737b83;
+        --gray600: #4c535a;
+        --gray700: #343a3f;
+        --gray800: #1d2024;
+        --gray900: #08090a;
+        --black: #000;
+        --blue: #1b70de;
+        --green: #32af4b;
+        --orange: #e99f55;
+        --yellow: #e6a500;
+        --red: #e65a37;
+        --business: #4d4d4d;
+        --brown: #837260;
+        --muted: #737b83;
+        --gray: #737b83;
+        --cool: #aeb5bd;
+        --blue100: #dce9fa;
+        --blue200: #c6dbf6;
+        --blue300: #98bef0;
+        --blue400: #5f9ae7;
+        --blue500: #1b70de;
+        --blue600: #1864c7;
+        --blue700: #1559b1;
+        --blue800: #104385;
+        --blue900: #0a2c58;
+        --green100: #e0f3e4;
+        --green200: #cbebd2;
+        --green300: #a2dbae;
+        --green400: #6fc781;
+        --green500: #32af4b;
+        --green600: #2d9d43;
+        --green700: #288c3c;
+        --green800: #1e692d;
+        --green900: #14461e;
+        --yellow100: #fbf1d8;
+        --yellow200: #f8e8bf;
+        --yellow300: #f3d68c;
+        --yellow400: #edc04c;
+        --yellow500: #e6a500;
+        --yellow600: #cf9400;
+        --yellow700: #b88400;
+        --yellow800: #8a6300;
+        --yellow900: #5c4200;
+        --red100: #fbe6e1;
+        --red200: #f8d5cd;
+        --red300: #f3b4a5;
+        --red400: #ed8b73;
+        --red500: #e65a37;
+        --red600: #cf5131;
+        --red700: #b8482c;
+        --red800: #8a3621;
+        --red900: #5c2416;
+      }
+      html,
+      body {
+        font-size: 18px;
+        line-height: 1.35;
+        font-family: var(--sans);
+        margin: 0;
+      }
+      body {
+        padding: 0 20px;
+      }
+      img.badge {
+        height: 20px;
+        display: inline-block;
+      }
+      code {
+        background: var(--gray100);
+        border-radius: 3px;
+        font-size: 16px;
+        padding: 2px 3px;
+      }
+      a {
+        color: var(--blue);
+      }
+      a:hover {
+        color: var(--blue700);
+      }
+      a:focus,
+      a:active {
+        background: var(--blue100);
+      }
+    </style>
+  </head>
+  <body>
+    <div style="max-width: 840px; margin: 0 auto">
+      <div align="center" style="margin: 0 -20px">
+        <div style="position: relative; width: 460px; max-width: 100%">
+          <div style="padding-bottom: 45%"></div>
+          <img
+            alt="Viscous.js"
+            style="
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              display: block;
+              width: 100%;
+            "
+            src="/viscousjs.svg"
+          />
+        </div>
+      </div>
+      <a href="https://www.npmjs.com/package/@mywheels/viscousjs"
+        ><img
+          class="badge"
+          alt="npm version"
+          src="https://badgen.net/npm/v/@mywheels/viscousjs"
+      /></a>
+      <a href="https://github.com/mywheels/viscousjs"
+        ><img
+          class="badge"
+          alt="types included"
+          src="https://badgen.net/npm/types/@mywheels/viscousjs"
+      /></a>
+      <a href="https://bundlephobia.com/result?p=@mywheels/viscousjs"
+        ><img
+          class="badge"
+          alt="minified size"
+          src="https://badgen.net/bundlephobia/min/@mywheels/viscousjs"
+      /></a>
+
+      <p>
+        Viscous.js is a simple and straightforward templating engine, similar to
+        Liquid(.js), but with some modifications so that it's nicer to use:
+      </p>
+      <ul>
+        <li>Operator precedence is taken into account.</li>
+        <li>Nested parenthesized expressions are allowed.</li>
+        <li>Helper function calls can be used.</li>
+        <li>
+          Less strict on certain control flow block names:
+          <code>{% else if %}</code> and <code>{% elseif %}</code> are
+          acceptable variations of <code>{% elsif %}</code>, and
+          <code>{% end %}</code> can be used instead of
+          <code>{% endXYZ %}</code>.
+        </li>
+      </ul>
+      <p>
+        <a href="https://www.npmjs.com/package/@mywheels/viscousjs"
+          >View on npm for more info &rsaquo;</a
+        >
+      </p>
+    </div>
+  </body>
+</html>

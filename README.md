@@ -22,6 +22,12 @@ And then there are certain features that I'm probably won'y be adding (unless so
 
 - The include, case/when, layout, render, and tablerow tags
 
+## Installation
+
+```sh
+yarn add @mywheels/viscousjs
+```
+
 ## Usage
 
 ```ts
